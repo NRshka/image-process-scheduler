@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 
-def get_reader(filter_func: Optional[Callable[[np.ndarray], bool]]):
+def get_image_reader(filter_func: Optional[Callable[[np.ndarray], bool]]):
     def read(data_dir: str) -> np.ndarray:
         images: List[np.ndarray] = []
         imagenames = []
@@ -29,4 +29,4 @@ def get_reader(filter_func: Optional[Callable[[np.ndarray], bool]]):
 
             return images
 
-        return read
+    return read
