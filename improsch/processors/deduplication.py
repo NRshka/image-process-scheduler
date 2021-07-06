@@ -1,6 +1,6 @@
 """Module to handle deduplication of images.
 Includes model for features extraction and model for neighbours searching."""
-from typing import Optional
+from typing import Optional, Union
 import torch
 import faiss
 import numpy as np
@@ -8,6 +8,44 @@ import numpy as np
 
 class FeatureExtractor:
     pass
+
+
+class NNfeatureExtractor(FeatureExtractor, torch.nn.Module):
+    def __init__(self, torch_model_name: str, repo: str = 'pytorch/vision:v0.9.0'):
+        if torch_model_name != 'googlenet':
+            raise AttributeError("Not supported model:", torch_model_name)
+
+        torch.nn.Module.__init__(self)
+
+        self.model = torch.hub.load(repo, torch_model_name, pretrained=True)
+        self.model.eval()
+        self.model.fc = torch.nn.Identity()
+
+    def get_embeddings(
+        self,
+        images: Union[torch.Tensor, np.ndarray],
+        batch_size: int,
+        device: str = 'cuda'
+    ) -> np.ndarray:
+        if not isinstance(images, torch.Tensor):
+            images = torch.Tensor(images)
+
+        dataset = torch.utils.data.TensorDataset(images)
+        dataloader = torch.utils.data.DataLoader(
+            dataset, shuffle=False, drop_last=False,
+            batch_size=batch_size  # TODO num_workers and pin_memory
+        )
+
+        self.model.to(device)
+        embeddings = []
+
+        with torch.no_grad():
+            for image_batch in dataloader:
+                image_batch = image_batch.to(device).cpu().numpy()
+                embed = self.model(image_batch)
+                embeddings.append(embed)
+
+        return np.stack(embeddings)
 
 
 class ImageIndex:
