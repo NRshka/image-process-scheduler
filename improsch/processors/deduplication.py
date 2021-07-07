@@ -200,11 +200,7 @@ class Deduplicator:
 
         return embeddings, imagenames
 
-    def run_deduplication(self, data_dir: str, dst_size: Tuple[int, int], chunk_size: Optional[int] = None):
-        filepaths = self._get_filepaths(data_dir, chunk_size)
-        # TODO batch_size as parameter
-        embeddings, imagenames = self._get_embeddings_from_dir(filepaths, dst_size, 64)
-
+    def process_embeddings(self, embeddings, imagenames: List[str], data_dir: str):
         index_length = self.index.get_index_length()
         indexes_path = os.path.join(data_dir, 'file_indexes.json')
         if os.path.isfile(indexes_path):
@@ -230,6 +226,19 @@ class Deduplicator:
             for ind1, ind2, distance in neighbours
         ]
 
+        return neighbours
+
+    def run_deduplication(self, data_dir: str, dst_size: Tuple[int, int], chunk_size: Optional[int] = None):
+        filepaths = self._get_filepaths(data_dir, chunk_size)
+        # TODO batch_size as parameter
+        embeddings, imagenames = self._get_embeddings_from_dir(filepaths, dst_size, 64)
+
+        neighbours = self.process_embeddings(embeddings, imagenames, data_dir)
+        return neighbours
+
+    def __call__(self, images: List[np.ndarray], imagenames: List[str], data_dir: str, batch_size: int) -> None:
+        embeddings = self._get_embeddings(images, batch_size)
+        neighbours = self.process_embeddings(embeddings, imagenames, data_dir)
         return neighbours
 
 
