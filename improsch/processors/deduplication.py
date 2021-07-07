@@ -170,7 +170,7 @@ class Deduplicator:
     def _get_embeddings_from_dir(
         self,
         filepaths: List,
-        dst_size: Tuple[int, int],
+        dst_size: Union[Tuple[int, int], List[int]],
         batch_size: int
     ):
         cpu_pool = Pool(min(self.pool_size, len(filepaths)))
@@ -228,7 +228,12 @@ class Deduplicator:
 
         return neighbours
 
-    def run_deduplication(self, data_dir: str, dst_size: Tuple[int, int], chunk_size: Optional[int] = None):
+    def run_deduplication(
+        self,
+        data_dir: str,
+        dst_size: Union[Tuple[int, int], List[int]],
+        chunk_size: Optional[int] = None
+    ):
         filepaths = self._get_filepaths(data_dir, chunk_size)
         # TODO batch_size as parameter
         embeddings, imagenames = self._get_embeddings_from_dir(filepaths, dst_size, 64)
@@ -239,6 +244,7 @@ class Deduplicator:
     def __call__(self, images: List[np.ndarray], imagenames: List[str], data_dir: str, batch_size: int) -> None:
         embeddings = self._get_embeddings(images, batch_size)
         neighbours = self.process_embeddings(embeddings, imagenames, data_dir)
+        # TODO save index in parallel thread
         return neighbours
 
 

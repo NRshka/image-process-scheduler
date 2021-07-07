@@ -27,6 +27,6 @@ def get_image_reader(filter_func: Optional[Callable[[np.ndarray], bool]]):
                         # TODO alerting
                         continue
 
-            return images
+            return images, imagenames
 
     return read

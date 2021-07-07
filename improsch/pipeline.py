@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Dict, Optional
 from functools import partial
 from .processors import Deduplicator, resize_batch
 from .filters import get_filter_by_min_size
@@ -17,13 +17,45 @@ def chain_functions(*functions) -> Callable:
     return func
 
 
+def functional_graph(functions: Dict[str, Callable], graph: dict):
+    def func(item):
+        backyard = {}
+        node_outputs = {}
+
+        for name in graph["names"]:
+            inputs = {key: backyard[key] for key in graph["config"][name].get("inputs", [])}
+
+            if not len(inputs):  # input node in graph
+                outputs = functions[name](item)
+            elif "nullsrc" in graph["config"][name]:
+                nullsrc_key = graph["config"][name]["nullsrc"]
+                outputs = functions[name](*list(inputs.values()), **{nullsrc_key: item})
+            else:
+                outputs = functions[name](*list(inputs.values()))
+
+            if not isinstance(outputs, tuple):
+                outputs = (outputs,)
+
+            for i, output_key in enumerate(graph["config"][name].get("outputs") or []):
+                backyard[output_key] = outputs[i]
+
+            # output node has no named outputs
+            if not graph["config"][name].get("outputs", []):
+                node_outputs[name] = outputs
+
+        return node_outputs
+
+    return func
+
+
 def build_pipeline(
     filter_by_size: bool,
     need_resize: bool,
     deduplication: bool,
     filter_args: Optional[dict] = None,
     resize_args: Optional[dict] = None,
-    deduplication_args: Optional[dict] = None
+    deduplication_args: Optional[dict] = None,
+    graph: Optional[dict] = None
 ):
     if filter_by_size:
         if not filter_args:
@@ -51,5 +83,15 @@ def build_pipeline(
         deduplicator = Deduplicator(8)  # TODO read pool_size from config
         deduplicate_partial = partial(deduplicator, **deduplication_args)
         processing_functions.append(deduplicate_partial)
+
+    if graph:
+        return functional_graph(
+            {
+                "read": reader,
+                "resize": resize_partial,
+                "deduplication": deduplicate_partial
+            },
+            graph
+        )
 
     return chain_functions(*processing_functions)
