@@ -1,6 +1,6 @@
 from typing import Callable, Dict, Optional
 from functools import partial
-from .processors import Deduplicator, resize_batch
+from .processors import Deduplicator, resize_batch, save_multiprocess
 from .filters import get_filter_by_min_size
 from .readers import get_image_reader
 
@@ -52,6 +52,7 @@ def build_pipeline(
     filter_by_size: bool,
     need_resize: bool,
     deduplication: bool,
+    save_path: str,
     filter_args: Optional[dict] = None,
     resize_args: Optional[dict] = None,
     deduplication_args: Optional[dict] = None,
@@ -84,12 +85,15 @@ def build_pipeline(
         deduplicate_partial = partial(deduplicator, **deduplication_args)
         processing_functions.append(deduplicate_partial)
 
+    save_partial = partial(save_multiprocess, pool_size=8, storage_path=save_path)
+
     if graph:
         return functional_graph(
             {
                 "read": reader,
                 "resize": resize_partial,
-                "deduplication": deduplicate_partial
+                "deduplication": deduplicate_partial,
+                "save": save_partial
             },
             graph
         )
