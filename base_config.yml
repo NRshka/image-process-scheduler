@@ -25,11 +25,12 @@ resize:
     - resized_images
 
 save:
+  task_id: true
   inputs:
     - resized_images
     - imagenames
   outputs:
-    - empty
+    - storage_imagenames
 
 deduplication:
   nullsrc:
@@ -38,5 +39,5 @@ deduplication:
     batch_size: 64
   inputs:
     - resized_images
-    - imagenames
+    - storage_imagenames
   outputs:

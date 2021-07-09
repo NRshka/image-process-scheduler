@@ -9,6 +9,7 @@ import os
 
 
 def save_image(img: np.ndarray, filepath: str):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     cv2.imwrite(filepath, img)
 
 
@@ -26,14 +27,19 @@ def unpack_func_for_saving(argument):
     return save_all(images, filepaths)
 
 
-def save_multiprocess(images: List[np.ndarray], filepaths: List[str], pool_size: int, storage_path: str):
+def save_multiprocess(images: List[np.ndarray], filepaths: List[str], task_id: str, pool_size: int, storage_path: str):
     assert len(images) == len(filepaths), RuntimeError("Lengths of images and filepaths are different")
 
     logging.info("Saving", len(images), "into storage", storage_path)
 
+    try:
+        os.mkdir(os.path.join(storage_path, task_id))
+    except Exception:
+        logging.error("Con't create dir for task", task_id)
+
     new_filepaths = []
     for i, filename in enumerate(filepaths):
-        new_filepaths.append(os.path.join(storage_path, Path(filename).name))
+        new_filepaths.append(os.path.join(storage_path, task_id, Path(filename).name))
 
     chunk_size = ceil(len(images) / pool_size)
     chunks = []
@@ -47,3 +53,9 @@ def save_multiprocess(images: List[np.ndarray], filepaths: List[str], pool_size:
     pool = Pool(pool_size)
     pool.map(unpack_func_for_saving, chunks)
     pool.close()
+
+    parted_filenames = []
+    for filename in new_filepaths:
+        parted_filenames.append(os.path.join(*filename.split('/')[-2:]))
+
+    return parted_filenames

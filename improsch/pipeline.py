@@ -18,12 +18,14 @@ def chain_functions(*functions) -> Callable:
 
 
 def functional_graph(functions: Dict[str, Callable], graph: dict):
-    def func(item):
-        backyard = {}
+    def func(item, task_id):
+        backyard = {'task_id': task_id}
         node_outputs = {}
 
         for name in graph["names"]:
             inputs = {key: backyard[key] for key in graph["config"][name].get("inputs", [])}
+            if graph["config"][name].get("task_id"):
+                inputs["task_id"] = task_id
 
             if not len(inputs):  # input node in graph
                 outputs = functions[name](item)

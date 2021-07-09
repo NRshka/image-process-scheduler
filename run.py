@@ -52,7 +52,7 @@ def run(pipeline, login: str, passw: str, port: int):
         print('\tGot request:')
         print(request)
         img_dir = request["directory"]
-        result = pipeline(img_dir)
+        result = pipeline(img_dir, request['id'])
         result['id'] = request['id']
         print('\tResult:')
         print(result)
