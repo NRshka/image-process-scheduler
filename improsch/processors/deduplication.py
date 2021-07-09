@@ -222,7 +222,7 @@ class Deduplicator:
 
         neighbours = self.index.find_neighbours(embeddings)
         neighbours = [
-            (ids_to_filenames[ind1], ids_to_filenames[ind2], distance)
+            (ids_to_filenames[ind1], ids_to_filenames[ind2], float(distance))
             for ind1, ind2, distance in neighbours
         ]
 
@@ -246,9 +246,3 @@ class Deduplicator:
         neighbours = self.process_embeddings(embeddings, imagenames, data_dir)
         # TODO save index in parallel thread
         return neighbours
-
-
-if __name__ == '__main__':
-    dedup = Deduplicator(8)
-    result = dedup.run_deduplication('/storage1/mrowl/smoke', (224, 224), 200)
-    print(result)
