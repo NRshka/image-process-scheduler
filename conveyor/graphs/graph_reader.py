@@ -39,6 +39,7 @@ def parse_config(config):
             continue
 
         # sort the functions in such a way that the input of each function has a predetermined output
+        is_okey = True
         for input_edge in step_params.get("inputs"):
             if input_edge not in outputs:
                 if i == len(object) - 1:  # last element can't be swapped so it's error in config
@@ -47,9 +48,11 @@ def parse_config(config):
                         f"didn't find {input_edge} as output at previous stages."
                     )
                 objects[i], objects[i + 1] = objects[i + 1], objects[i]
-            else:
-                outputs.extend(step_params.get("outputs") or [])  # finish node in graph may not containes outputs
-                i += 1
+                is_okey = False
+
+        if is_okey:
+            outputs.extend(step_params.get("outputs") or [])  # finish node in graph may not containes outputs
+            i += 1
 
     return {
         "functions": function_names,
