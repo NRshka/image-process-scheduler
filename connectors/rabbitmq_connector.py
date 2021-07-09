@@ -5,9 +5,16 @@ import aio_pika
 import json
 
 
-async def main(loop, queue_name: str,  processing_func: Callable):
+async def main(
+    loop,
+    queue_name: str,
+    processing_func: Callable,
+    login: str,
+    passw: str,
+    port: int
+):
     connection: Any = await aio_pika.connect_robust(
-        "amqp://guest:guest@127.0.0.1:5673/", loop=loop,
+        f"amqp://{login}:{passw}@127.0.0.1:{port}/", loop=loop,
         port=5673
     )
 
@@ -22,16 +29,24 @@ async def main(loop, queue_name: str,  processing_func: Callable):
             async for message in queue_iter:
                 async with message.process():
                     options = json.loads(message.body.decode('utf-8'))
-                    processing_func(options)
+                    await processing_func(options)
 
 
 def run_async_rabbitmq_connection(
     queue_name,
     processing_function,
-    loop: Optional[AbstractEventLoop] = None
+    login: str,
+    passw: str,
+    port: int,
+    loop: Optional[AbstractEventLoop] = None,
 ):
     if not loop:
         loop = asyncio.get_event_loop()
 
-    loop.run_until_complete(main(loop, queue_name, processing_function))
-    loop.close()
+    loop.run_until_complete(
+        main(
+            loop, queue_name, processing_function,
+            login, passw, port
+        )
+    )
+    # loop.close()
