@@ -42,7 +42,7 @@ def parse_config(config):
         is_okey = True
         for input_edge in step_params.get("inputs"):
             if input_edge not in outputs:
-                if i == len(object) - 1:  # last element can't be swapped so it's error in config
+                if i == len(objects) - 1:  # last element can't be swapped so it's error in config
                     raise AttributeError(
                         f"Can't connect {obj_name} to the graph:",
                         f"didn't find {input_edge} as output at previous stages."
