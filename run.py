@@ -73,7 +73,7 @@ def parse_config(config_path: str):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, default='config.yml')
-    parser.add_argument('--pipeline', type=str, default='base_config.yml')
+    parser.add_argument('--pipeline', type=str, default='base_pipeline.yml')
 
     args = parser.parse_args()
     config = parse_config(args.config)
